@@ -35,6 +35,12 @@ func NewMessage(v []byte) *Message {
 		Value:      []rune(string(utf8V)),
 		Delimeters: *NewDelimeters(),
 	}
+
+	seg := Segment{Value: []rune("MSH" + string(newMessage.Delimeters.Field) + newMessage.Delimeters.DelimeterField)}
+	seg.parse(&newMessage.Delimeters)
+	newMessage.Segments = append(newMessage.Segments, seg)
+	newMessage.Value = newMessage.encode()
+
 	if err := newMessage.parse(); err != nil {
 		log.Fatal(fmt.Sprintf("Parse Error: %+v", err))
 	}
