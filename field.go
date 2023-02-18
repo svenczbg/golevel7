@@ -35,8 +35,8 @@ func (f *Field) parse(seps *Delimeters) error {
 	i := 0
 	ii := 0
 	for {
-		ch, _, _ := r.ReadRune()
-		ii++
+		ch, size, _ := r.ReadRune()
+		ii += size
 		switch {
 		case ch == eof || (ch == endMsg && seps.LFTermMsg):
 			if ii > i {

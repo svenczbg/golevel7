@@ -61,8 +61,8 @@ func (s *Segment) parse(seps *Delimeters) error {
 	seq := 0
 	segName := string(s.Value[0:3]) // this is actually always true
 	for {
-		ch, _, _ := r.ReadRune()
-		ii++
+		ch, size, _ := r.ReadRune()
+		ii += size
 		switch {
 		case ch == eof || (ch == endMsg && seps.LFTermMsg):
 			if ii > i {

@@ -163,11 +163,11 @@ func (m *Message) parse() error {
 	i := 0
 	ii := 0
 	for {
-		ch, _, err := r.ReadRune()
+		ch, size, err := r.ReadRune()
 		if err != nil {
 			ch = eof
 		}
-		ii++
+		ii += size
 		switch {
 		case ch == eof || (ch == endMsg && m.Delimeters.LFTermMsg):
 			//just for safety: cannot reproduce this on windows
