@@ -1,7 +1,6 @@
 package golevel7
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"reflect"
@@ -38,6 +37,15 @@ func (e *Encoder) Encode(it interface{}) error {
 // Marshal will insert values into a message
 // It will panic if interface{} is not a pointer to a struct
 func Marshal(m *Message, it interface{}) ([]byte, error) {
+	existingMSH, _ := m.Segment("MSH")
+
+	//If we have no MSH header (in case of new message) add it first
+	if existingMSH == nil {
+		seg := Segment{Value: []rune("MSH" + string(m.Delimeters.Field) + m.Delimeters.DelimeterField + string(m.Delimeters.Field))}
+		seg.parse(&m.Delimeters)
+		m.Segments = append(m.Segments, seg)
+	}
+
 	st := reflect.ValueOf(it).Elem()
 	stt := st.Type()
 	for i := 0; i < st.NumField(); i++ {
@@ -46,17 +54,16 @@ func Marshal(m *Message, it interface{}) ([]byte, error) {
 		if r != "" {
 			l := NewLocation(r)
 			val := st.Field(i).String()
+			if val == "" { // if there is no value check if there is a default value
+				def := fld.Tag.Get("hl7default")
+				if def != "" {
+					val = def
+				}
+			}
 			if err := m.Set(l, val); err != nil {
 				return nil, err
 			}
 		}
 	}
-
-	msg := []byte(string(m.Value))
-	msh := append([]byte("MSH"), byte(m.Delimeters.Field))
-	delims := append(msh, []byte(m.Delimeters.DelimeterField+string(m.Delimeters.Field))...)
-	msg = bytes.ReplaceAll(msg, msh, delims)
-	m.Value = []rune(string(msg))
-
-	return msg, nil
+	return []byte(string(m.Value)), nil
 }
