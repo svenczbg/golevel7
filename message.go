@@ -21,28 +21,35 @@ type Message struct {
 
 // NewMessage returns a new message with the v byte value
 func NewMessage(v []byte) *Message {
+	var newMessage *Message
 	var utf8V []byte
 	if len(v) != 0 {
+		// --- build message from incoming stream ------------------------------
 		reader, err := charset.NewReader(bytes.NewReader(v), "text/plain")
 		if err != nil {
 			return nil
 		}
 		utf8V, err = ioutil.ReadAll(reader)
+		if err != nil {
+			log.Fatalf("error reading input value: %+v", err)
+		}
+		newMessage = &Message{
+			Value:      []rune(string(utf8V)),
+			Delimeters: *NewDelimeters(),
+		}
+		if err := newMessage.parse(); err != nil {
+			log.Fatalf("parse Error: %+v", err)
+		}
 	} else {
-		utf8V = v
-	}
-	newMessage := &Message{
-		Value:      []rune(string(utf8V)),
-		Delimeters: *NewDelimeters(),
-	}
-
-	seg := Segment{Value: []rune("MSH" + string(newMessage.Delimeters.Field) + newMessage.Delimeters.DelimeterField)}
-	seg.parse(&newMessage.Delimeters)
-	newMessage.Segments = append(newMessage.Segments, seg)
-	newMessage.Value = newMessage.encode()
-
-	if err := newMessage.parse(); err != nil {
-		log.Fatal(fmt.Sprintf("Parse Error: %+v", err))
+		// build message from scratch ------------------------------------------
+		newMessage = &Message{
+			Value:      []rune(string(utf8V)),
+			Delimeters: *NewDelimeters(),
+		}
+		seg := Segment{Value: []rune("MSH" + string(newMessage.Delimeters.Field) + newMessage.Delimeters.DelimeterField)}
+		seg.parse(&newMessage.Delimeters)
+		newMessage.Segments = append(newMessage.Segments, seg)
+		newMessage.Value = newMessage.Encode()
 	}
 	return newMessage
 }
