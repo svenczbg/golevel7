@@ -63,6 +63,7 @@ if err:=ms.Err(); err!=nil {
 ```
 
 ### Message Query
+```go
 First matching value
 val, err := msg.Find("PID.5.1")
 
